@@ -1,0 +1,12 @@
+---
+description: Enforce lean scope — no extra work, no assumptions
+alwaysApply: true
+---
+
+# Lean Scope
+
+- Do ONLY what was asked. Nothing more.
+- No out-of-scope additions, refactors, or "nice to haves".
+- No premature abstractions or future-proofing.
+- If unclear or ambiguous, ASK — do not assume.
+- If unsure whether something is in scope, ASK.
