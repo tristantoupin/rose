@@ -16,5 +16,6 @@ dependencies = [
 [project.scripts]
 rose = "rose_cli.main:cli"
 
-[tool.setuptools]
-packages = ["rose_cli"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["rose_cli*"]
