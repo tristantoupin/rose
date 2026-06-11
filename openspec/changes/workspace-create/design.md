@@ -111,7 +111,7 @@ rose workspace create [--refresh]
 │       - Recent repos first (★ prefix, from history.json)
 │       - Then remaining cached repos
 │       - Always last entry: "🔍 Not there? Search GitHub for..."
-│     User types to filter, arrows to navigate, space to select,
+│     User types to filter, arrows to navigate, tab to select,
 │     enter to confirm. Must select at least 1 repo.
 │
 │     If "Not there?" selected:

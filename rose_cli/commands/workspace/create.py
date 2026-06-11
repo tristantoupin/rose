@@ -80,7 +80,7 @@ def _pick_repos(all_repos: list[str], org: str) -> list[str]:
     choices = _build_choices(recent, all_repos)
 
     selected = inquirer.fuzzy(
-        message="Select repos (space to mark, enter to confirm):",
+        message="Select repos (tab to mark, enter to confirm):",
         choices=choices,
         multiselect=True,
         validate=lambda result: (

@@ -85,7 +85,7 @@ def _pick_repos_for_edit(
     choices.append(Choice(value=_SEARCH_SENTINEL, name=_SEARCH_SENTINEL))
 
     selected = inquirer.fuzzy(
-        message="Select repos (space to mark, enter to confirm):",
+        message="Select repos (tab to mark, enter to confirm):",
         choices=choices,
         multiselect=True,
         validate=lambda result: len([r for r in result if r != _SEARCH_SENTINEL]) > 0,
