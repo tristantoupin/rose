@@ -184,14 +184,16 @@ def _create_worktrees(
         repo_short = git.repo_name_from_full(full_name)
         bare_path = git.bare_clone_path(full_name)
         worktree_path = repos_dir / repo_short
-        from_ref = f"origin/{default_branches.get(full_name, 'main')}"
+        default_ref = f"origin/{default_branches.get(full_name, 'main')}"
+        source_ref = f"origin/{branch}" if git.remote_branch_exists(bare_path, branch) else default_ref
         click.echo(f"  Creating worktree for {repo_short}...")
         click.echo(f"    bare:     {bare_path}")
         click.echo(f"    path:     {worktree_path}")
         click.echo(f"    branch:   {branch}")
-        click.echo(f"    from ref: {from_ref}")
+        click.echo(f"    source:   {source_ref}")
         try:
-            git.add_worktree(bare_path, worktree_path, branch, from_ref)
+            git.set_branch_to_ref(bare_path, branch, source_ref)
+            git.add_worktree(bare_path, worktree_path, branch)
         except RuntimeError as exc:
             click.echo(f"  ✗  Worktree failed for {repo_short}: {exc}")
             raise SystemExit(1)
@@ -265,9 +267,6 @@ def create(refresh: bool) -> None:
         click.echo("  ✗  No repos selected. Aborted.")
         raise SystemExit(1)
     click.echo()
-
-    # Branch conflict check
-    _check_branch_conflicts(repos, branch)
 
     # Ensure bare clones
     _ensure_bare_clones(repos)

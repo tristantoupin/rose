@@ -73,10 +73,31 @@ def branch_exists(bare_path: Path, branch_name: str) -> bool:
     return bool(output.strip())
 
 
-def add_worktree(bare_path: Path, worktree_path: Path, branch: str, from_ref: str) -> None:
-    """Create a new worktree at worktree_path on a new branch from from_ref."""
+def remote_branch_exists(bare_path: Path, branch_name: str) -> bool:
+    """Return True if refs/remotes/origin/<branch_name> exists in the bare clone."""
+    try:
+        _git(bare_path, "rev-parse", "--verify", f"refs/remotes/origin/{branch_name}")
+        return True
+    except RuntimeError:
+        return False
+
+
+def set_branch_to_ref(bare_path: Path, branch_name: str, source_ref: str) -> None:
+    """Create or force-reset local branch to source_ref.
+
+    Fails if branch_name is currently checked out in another worktree.
+    """
+    _git(bare_path, "branch", "-f", branch_name, source_ref)
+
+
+def add_worktree(bare_path: Path, worktree_path: Path, branch: str) -> None:
+    """Create a new worktree at worktree_path on an existing branch.
+
+    Callers must call set_branch_to_ref before this to ensure the branch
+    exists at the intended commit.
+    """
     worktree_path.parent.mkdir(parents=True, exist_ok=True)
-    _git(bare_path, "worktree", "add", str(worktree_path), "-b", branch, from_ref)
+    _git(bare_path, "worktree", "add", str(worktree_path), branch)
 
 
 def worktree_status(worktree_path: Path) -> dict:

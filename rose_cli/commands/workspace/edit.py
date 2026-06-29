@@ -249,9 +249,13 @@ def edit(name: str | None, force: bool) -> None:
             except RuntimeError:
                 default_br = "main"
             added_default_branches[full_name] = default_br
-            from_ref = f"origin/{default_br}"
+            default_ref = f"origin/{default_br}"
+            source_ref = f"origin/{branch}" if git.remote_branch_exists(bare_path, branch) else default_ref
+            click.echo(f"  Preparing {repo_short}...")
+            click.echo(f"    source: {source_ref}")
             try:
-                git.add_worktree(bare_path, worktree_path, branch, from_ref)
+                git.set_branch_to_ref(bare_path, branch, source_ref)
+                git.add_worktree(bare_path, worktree_path, branch)
                 click.echo(f"  ✓  {repo_short:<20} added → {branch}")
             except RuntimeError as exc:
                 click.echo(f"  ✗  {repo_short}: {exc}")
