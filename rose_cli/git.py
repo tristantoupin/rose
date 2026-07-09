@@ -85,9 +85,15 @@ def remote_branch_exists(bare_path: Path, branch_name: str) -> bool:
 def set_branch_to_ref(bare_path: Path, branch_name: str, source_ref: str) -> None:
     """Create or force-reset local branch to source_ref.
 
+    When origin/<branch_name> exists, allow Git's default tracking so the
+    feature branch tracks its remote counterpart. Otherwise use --no-track
+    so branches created from origin/main (or another default) do not inherit
+    that ref as their upstream.
+
     Fails if branch_name is currently checked out in another worktree.
     """
-    _git(bare_path, "branch", "-f", branch_name, source_ref)
+    flags = () if remote_branch_exists(bare_path, branch_name) else ("--no-track",)
+    _git(bare_path, "branch", "-f", *flags, branch_name, source_ref)
 
 
 def add_worktree(bare_path: Path, worktree_path: Path, branch: str) -> None:
