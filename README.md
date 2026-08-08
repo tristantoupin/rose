@@ -30,13 +30,19 @@ rose --help
 
 ## Upgrade
 
-**From PyPI** (when published):
+Rose is not published to PyPI (a different `rose` package exists there — do not
+run `pipx install rose`).
+
+If you installed from a local clone or git URL, `pipx upgrade rose` re-installs
+from that same source after you pull changes:
 
 ```bash
+cd /path/to/rose
+git pull
 pipx upgrade rose
 ```
 
-**From a local clone** (typical during development):
+Or reinstall explicitly:
 
 ```bash
 cd /path/to/rose
@@ -62,21 +68,27 @@ Config is stored at `~/.rose/config.toml`. Bare clones live in
 ## Install the agent skill
 
 Rose includes a Cursor skill so agents know how to run the CLI correctly
-(non-interactive flags, workspace layout, limitations).
+(non-interactive flags, workspace layout, limitations). When working inside a
+clone of this repo, Cursor discovers `.cursor/skills/rose/` automatically.
 
-**Symlink (recommended — stays in sync with repo):**
+**Install globally** (other projects, without cloning rose):
+
+```bash
+npx skills add tristantoupin/rose@rose -g -y
+```
+
+**Install into the current project:**
+
+```bash
+npx skills add tristantoupin/rose@rose -y
+```
+
+**Manual fallback** (local clone, stays in sync with your working tree):
 
 ```bash
 cd /path/to/rose
 mkdir -p ~/.cursor/skills
 ln -sf "$(pwd)/.cursor/skills/rose" ~/.cursor/skills/rose
-```
-
-**Copy:**
-
-```bash
-mkdir -p ~/.cursor/skills/rose
-cp /path/to/rose/.cursor/skills/rose/SKILL.md ~/.cursor/skills/rose/
 ```
 
 Start a new agent session after installing.

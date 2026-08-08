@@ -220,10 +220,11 @@ rose create \
 test -f ~/.rose/config.toml && rose repos sync
 ```
 
-**Upgrade rose after pulling latest source:**
+**Upgrade rose** (not on PyPI — never `pipx install rose`):
 
 ```bash
-cd /path/to/rose && pipx install . --force
+cd /path/to/rose && git pull && pipx upgrade rose
+# or: pipx install . --force
 ```
 
 ## Error messages
@@ -239,18 +240,17 @@ cd /path/to/rose && pipx install . --force
 
 ## Install the Rose skill
 
-From a clone of this repository:
+Inside a rose clone, Cursor auto-discovers `.cursor/skills/rose/`. Elsewhere:
 
 ```bash
-mkdir -p ~/.cursor/skills
-ln -sf "$(pwd)/.cursor/skills/rose" ~/.cursor/skills/rose
+npx skills add tristantoupin/rose@rose -g -y   # global (~/.cursor/skills/)
+npx skills add tristantoupin/rose@rose -y      # current project
 ```
 
-Or copy:
+Manual fallback from a local clone:
 
 ```bash
-mkdir -p ~/.cursor/skills/rose
-cp .cursor/skills/rose/SKILL.md ~/.cursor/skills/rose/
+ln -sf "$(pwd)/.cursor/skills/rose" ~/.cursor/skills/rose
 ```
 
 Restart Cursor or start a new agent session so the skill is picked up.
