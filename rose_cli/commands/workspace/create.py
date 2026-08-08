@@ -238,7 +238,25 @@ def _write_code_workspace(
 
 @click.command()
 @click.option("--refresh", is_flag=True, help="Force repo cache refresh before selection.")
-def create(refresh: bool) -> None:
+@click.option("--name", "name_opt", default=None, help="Workspace name (skips prompt).")
+@click.option(
+    "--branch",
+    "branch_opt",
+    default=None,
+    help="Feature branch name (skips prompt, defaults to --name).",
+)
+@click.option(
+    "--repo",
+    "repo_opt",
+    multiple=True,
+    help="Repo to include (org/repo). Repeatable; skips the picker.",
+)
+def create(
+    refresh: bool,
+    name_opt: str | None,
+    branch_opt: str | None,
+    repo_opt: tuple[str, ...],
+) -> None:
     """Create a new multi-repo workspace."""
     workspace_root, template_path, org = load_and_validate_config()
 
@@ -246,23 +264,35 @@ def create(refresh: bool) -> None:
     click.echo()
 
     # Workspace name
-    while True:
-        name = click.prompt("Workspace name")
+    if name_opt is not None:
+        name = name_opt
         if not _NAME_RE.match(name):
             click.echo("  ✗  Name must contain only letters, numbers, hyphens, underscores.")
-            continue
+            raise SystemExit(1)
         target = workspace_root / name
         if target.exists():
             click.echo(f"  ✗  '{target}' already exists. Choose a different name.")
-            continue
-        break
+            raise SystemExit(1)
+    else:
+        while True:
+            name = click.prompt("Workspace name")
+            if not _NAME_RE.match(name):
+                click.echo("  ✗  Name must contain only letters, numbers, hyphens, underscores.")
+                continue
+            target = workspace_root / name
+            if target.exists():
+                click.echo(f"  ✗  '{target}' already exists. Choose a different name.")
+                continue
+            break
 
     # Branch name
-    branch = click.prompt("Feature branch name", default=name)
+    branch = branch_opt or (name if name_opt is not None else None)
+    if branch is None:
+        branch = click.prompt("Feature branch name", default=name)
     click.echo()
 
     # Repo selection
-    repos = _pick_repos(all_repos, org)
+    repos = list(repo_opt) if repo_opt else _pick_repos(all_repos, org)
     if not repos:
         click.echo("  ✗  No repos selected. Aborted.")
         raise SystemExit(1)
