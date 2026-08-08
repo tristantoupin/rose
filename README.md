@@ -1,29 +1,174 @@
-## Quick Start
+# Rose
 
-**Requirements:** Python 3.9+, [pipx](https://pipx.pypa.io/), [GitHub CLI](https://cli.github.com/) (`gh`)
+CLI for multi-repo development workspaces. Rose creates git worktrees across
+selected repos on a shared feature branch, writes a `.code-workspace` file, and
+opens Cursor.
+
+## Requirements
+
+- Python 3.9+
+- [pipx](https://pipx.pypa.io/)
+- [GitHub CLI](https://cli.github.com/) (`gh`), authenticated (`gh auth login`)
+- `git`
+- `cursor` (optional — used to open workspaces after create/edit/list)
+
+## Install
+
+From a clone of this repository:
 
 ```bash
+git clone <repo-url> rose
+cd rose
 pipx install .
 ```
 
-Installs the `rose` command globally in an isolated environment.
+Verify:
 
----
+```bash
+rose --help
+```
 
-## Setup
+## Upgrade
+
+**From PyPI** (when published):
+
+```bash
+pipx upgrade rose
+```
+
+**From a local clone** (typical during development):
+
+```bash
+cd /path/to/rose
+git pull
+pipx install . --force
+```
+
+## First-time setup
 
 ```bash
 rose init
 ```
 
-Interactive setup. Configures workspace root, template path, and GitHub org. Caches the repo list.
+Interactive setup. Configures:
 
+- Workspace root (default `~/workspaces`)
+- Template path (default `~/.rose/templates/default`)
+- GitHub organization
 
----
+Config is stored at `~/.rose/config.toml`. Bare clones live in
+`~/.rose/repos/`.
+
+## Install the agent skill
+
+Rose includes a Cursor skill so agents know how to run the CLI correctly
+(non-interactive flags, workspace layout, limitations).
+
+**Symlink (recommended — stays in sync with repo):**
+
+```bash
+cd /path/to/rose
+mkdir -p ~/.cursor/skills
+ln -sf "$(pwd)/.cursor/skills/rose" ~/.cursor/skills/rose
+```
+
+**Copy:**
+
+```bash
+mkdir -p ~/.cursor/skills/rose
+cp /path/to/rose/.cursor/skills/rose/SKILL.md ~/.cursor/skills/rose/
+```
+
+Start a new agent session after installing.
+
+## Commands
+
+### `rose create`
+
+Create a new multi-repo workspace.
+
+**Interactive** (prompts for name, branch, and repo picker):
+
+```bash
+rose create
+```
+
+**Non-interactive** (for scripts and agents — no TTY required):
+
+```bash
+rose create \
+  --name my-feature \
+  --branch my-feature \
+  --repo myorg/api \
+  --repo myorg/web
+```
+
+| Flag | Description |
+|------|-------------|
+| `--name` | Workspace name (folder name). Alphanumeric, `-`, `_`. |
+| `--branch` | Feature branch. Defaults to `--name`. |
+| `--repo` | `org/repo`. Repeatable. |
+| `--refresh` | Force refresh GitHub repo cache. |
+
+Creates:
+
+```
+~/workspaces/my-feature/
+├── my-feature.code-workspace
+├── docs/
+└── repos/
+    ├── api/
+    └── web/
+```
+
+### `rose edit`
+
+Add or remove repos on an existing workspace. **Interactive** — uses a fuzzy
+multiselect picker (requires TTY).
+
+```bash
+rose edit my-feature
+rose edit                    # infers workspace when run inside one
+rose edit my-feature --force # skip uncommitted/unpushed safety checks on removal
+```
+
+### `rose list`
+
+List workspaces and open one in Cursor. **Interactive** — fuzzy picker
+(requires TTY).
+
+```bash
+rose list
+```
+
+### Other commands
+
+```bash
+rose init              # first-time setup
+rose org set <org>     # set GitHub org and rebuild repo cache
+rose repos sync        # refresh cached repo list
+rose --help            # full command list
+rose <command> --help  # per-command help
+```
+
+## Agent-friendly usage
+
+Agents should read `.cursor/skills/rose/SKILL.md` (or the installed copy at
+`~/.cursor/skills/rose/SKILL.md`) before running Rose commands.
+
+Key points:
+
+- Use `rose create --name ... --repo ...` — never rely on interactive pickers
+- `rose edit` and `rose list` need a human or TTY; agents can scan
+  `*.code-workspace` files under the workspace root instead
+- Ensure `rose init` has been run and `gh auth status` succeeds before creating
+  workspaces
 
 ## Help
 
 ```bash
 rose --help
-rose <command> --help
+rose create --help
+rose edit --help
+rose list --help
 ```

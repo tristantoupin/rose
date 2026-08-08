@@ -1,0 +1,14 @@
+---
+description: Keep Rose CLI docs in sync when adding or changing commands
+globs: rose_cli/**
+alwaysApply: false
+---
+
+# CLI Documentation
+
+When adding or changing a `rose` CLI command:
+
+1. Update `.cursor/skills/rose/SKILL.md` — agent-facing reference (flags, TTY requirements, workflows)
+2. Update `README.md` — user-facing install/upgrade/skill install and command docs
+
+Both files should reflect the same command surface. Prefer documenting non-interactive flags for agent use.
