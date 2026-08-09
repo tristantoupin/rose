@@ -150,7 +150,14 @@ def _check_removal_safety(
 @click.command()
 @click.argument("name", required=False, default=None)
 @click.option("--force", is_flag=True, help="Skip uncommitted/unpushed safety checks on removed repos.")
-def edit(name: str | None, force: bool) -> None:
+@click.option(
+    "--repo",
+    "repo_opt",
+    multiple=True,
+    help="Repo to include (org/repo). Repeatable; must list the full desired repo set "
+    "(including repos already present that should be kept). Skips the picker.",
+)
+def edit(name: str | None, force: bool, repo_opt: tuple[str, ...]) -> None:
     """Add or remove repos from an existing active workspace."""
     workspace_root, _, org = load_and_validate_config()
 
@@ -194,7 +201,7 @@ def edit(name: str | None, force: bool) -> None:
             raise SystemExit(1)
         click.echo()
 
-    new_repos = _pick_repos_for_edit(all_repos, current_repos, org)
+    new_repos = list(repo_opt) if repo_opt else _pick_repos_for_edit(all_repos, current_repos, org)
     click.echo()
 
     current_set = set(current_repos)

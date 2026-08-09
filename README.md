@@ -143,8 +143,20 @@ workspace is deleted.
 
 ### `rose edit`
 
-Add or remove repos on an existing workspace. **Interactive** — uses a fuzzy
-multiselect picker (requires TTY).
+Add or remove repos on an existing workspace.
+
+**Non-interactive** (for scripts and agents — no TTY required):
+
+```bash
+rose edit my-feature --repo myorg/api --repo myorg/web
+```
+
+`--repo` is repeatable and must list the **full desired repo set** —
+repos already present that aren't re-listed are removed. To keep a repo,
+list it again alongside any new ones.
+
+**Interactive** (no `--repo` given) — uses a fuzzy multiselect picker
+pre-selected with current repos (requires TTY):
 
 ```bash
 rose edit my-feature
@@ -179,9 +191,10 @@ Agents should read `.cursor/skills/rose/SKILL.md` (or the installed copy at
 
 Key points:
 
-- Use `rose create --name ... --repo ...` — never rely on interactive pickers
-- `rose edit` and `rose list` need a human or TTY; agents can scan
-  `*.code-workspace` files under the workspace root instead
+- Use `rose create --name ... --repo ...` and `rose edit <name> --repo ...`
+  — never rely on interactive pickers
+- `rose list` needs a human or TTY; agents can scan `*.code-workspace` files
+  under the workspace root instead
 - Ensure `rose init` has been run and `gh auth status` succeeds before creating
   workspaces
 

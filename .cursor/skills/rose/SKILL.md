@@ -92,7 +92,8 @@ Need a new multi-repo workspace?
   └─ rose create --name ... --branch ... --repo org/repo [--repo ...]
 
 Need to add/remove repos on an existing workspace?
-  └─ rose edit <name>   # interactive picker — needs TTY
+  └─ rose edit <name> --repo org/repo [--repo ...]   # non-interactive, full desired repo set
+  └─ rose edit <name>   # interactive picker — needs TTY (no --repo given)
 
 Need to find/open an existing workspace?
   └─ rose list          # interactive picker — needs TTY
@@ -183,22 +184,42 @@ Bare clones (shared, not inside workspace): `~/.rose/repos/<org>__<repo>.git`
 }
 ```
 
-### `rose edit <name>` — add or remove repos (interactive)
+### `rose edit <name>` — add or remove repos
 
-Modifies repos on an active workspace. Pre-selects current repos in a fuzzy
-multiselect.
+Modifies repos on an active workspace.
+
+**Non-interactive (use this from agents):**
+
+```bash
+rose edit my-feature --repo myorg/api --repo myorg/web
+```
+
+`--repo` is repeatable and specifies the **complete desired repo set** — not
+an additive list. Any current repo you omit is removed; any new repo you add
+is added; repos listed that are already present are left untouched. To keep
+an existing repo, list it again — the same "one-liner has the full set"
+model as `rose create --repo`.
+
+Example — workspace currently has `myorg/api` and `myorg/web`; keep `api`,
+drop `web`, add `myorg/gateway`:
+
+```bash
+rose edit my-feature --repo myorg/api --repo myorg/gateway
+```
+
+**Interactive (no `--repo` given):** opens a fuzzy multiselect pre-selected
+with current repos. Requires TTY — not agent-friendly.
 
 ```bash
 rose edit my-feature
 rose edit              # infers name when cwd is inside a workspace
-rose edit my-feature --force   # skip safety checks on removals
+rose edit my-feature --force                        # skip safety checks on removals
+rose edit my-feature --repo myorg/api --force        # same, non-interactive
 ```
 
-**Not agent-friendly:** no flags to add/remove repos non-interactively. Requires
-TTY. If an agent needs this, ask the user to run it or use a pseudo-TTY.
-
 **Safety:** refuses to remove repos with modified, untracked, or unpushed
-work unless `--force`.
+work unless `--force` — applies identically whether the removal came from
+`--repo` or the interactive picker.
 
 **Inactive workspaces:** fails with message to reactivate first (reactivate not
 yet implemented in all versions — check `rose --help`).
@@ -257,6 +278,15 @@ rose create \
   --branch clin-12345-feature \
   --repo myorg/api.clinical \
   --repo myorg/web
+```
+
+**Add a repo to an existing workspace (keep all current repos, add one):**
+
+```bash
+rose edit clin-12345-feature \
+  --repo myorg/api.clinical \
+  --repo myorg/web \
+  --repo myorg/gateway
 ```
 
 **Check whether rose is configured:**
