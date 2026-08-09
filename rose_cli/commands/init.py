@@ -15,6 +15,7 @@ from rose_cli import github
 DEFAULT_WORKSPACE = "~/workspaces"
 DEFAULT_TEMPLATE = "~/.rose/templates/default"
 DEFAULT_GITHUB_ORG = ""
+DEFAULT_VAULT = ""
 
 
 def check_github_cli() -> bool:
@@ -91,8 +92,20 @@ def init() -> None:
     )
     click.echo()
 
+    # Vault path (optional persistent docs vault, e.g. an Obsidian vault)
+    raw_vault = click.prompt(
+        "Vault path for persistent docs (blank to skip, docs/ stays local)",
+        default=DEFAULT_VAULT,
+        show_default=False,
+    )
+    vault_path = expand_path(raw_vault) if raw_vault else None
+    if vault_path is not None:
+        vault_path.mkdir(parents=True, exist_ok=True)
+        click.echo(f"  ✓  Vault directory ready: {vault_path}")
+    click.echo()
+
     # Write config
-    write_config(str(workspace_path), str(template_path), org)
+    write_config(str(workspace_path), str(template_path), org, str(vault_path) if vault_path else "")
     click.echo(f"  ✓  Config saved to {CONFIG_PATH}")
 
     # Build initial repo cache
@@ -111,6 +124,7 @@ def init() -> None:
     click.echo(f"  ✓  Workspace path:  {workspace_path}")
     click.echo(f"  ✓  Template path:   {template_path}")
     click.echo(f"  ✓  GitHub org:      {org}")
+    click.echo(f"  ✓  Vault path:      {vault_path or '(not configured — docs stay local)'}")
     if not gh_ok:
         click.echo("  ⚠  GitHub CLI needs attention (see above)")
     click.echo()

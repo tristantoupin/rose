@@ -6,6 +6,7 @@ from rose_cli.commands.workspace.list import list_cmd
 from rose_cli.commands.init import init
 from rose_cli.commands.org import org
 from rose_cli.commands.repos import repos
+from rose_cli.commands.vault import vault
 
 
 @click.group()
@@ -16,6 +17,7 @@ def cli() -> None:
 cli.add_command(init)
 cli.add_command(org)
 cli.add_command(repos)
+cli.add_command(vault)
 cli.add_command(create)
 cli.add_command(edit)
 cli.add_command(list_cmd, name="list")

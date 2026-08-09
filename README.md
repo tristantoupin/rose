@@ -61,6 +61,9 @@ Interactive setup. Configures:
 - Workspace root (default `~/workspaces`)
 - Template path (default `~/.rose/templates/default`)
 - GitHub organization
+- Vault path (optional, blank to skip) — a persistent docs folder (e.g. an
+  Obsidian vault) that new workspaces link their docs into, instead of a
+  local `docs/` folder. Change it later with `rose vault set <path>`.
 
 Config is stored at `~/.rose/config.toml`. Bare clones live in
 `~/.rose/repos/`.
@@ -127,11 +130,16 @@ Creates:
 ```
 ~/workspaces/my-feature/
 ├── my-feature.code-workspace
-├── docs/
+├── docs/                      # only if no vault is configured
 └── repos/
     ├── api/
     └── web/
 ```
+
+If a vault is configured (`rose init` or `rose vault set <path>`), the
+workspace has no local `docs/` — the `.code-workspace` file's docs folder
+entry instead points at `<vault>/my-feature/`, which persists even after the
+workspace is deleted.
 
 ### `rose edit`
 
@@ -159,6 +167,7 @@ rose list
 rose init              # first-time setup
 rose org set <org>     # set GitHub org and rebuild repo cache
 rose repos sync        # refresh cached repo list
+rose vault set <path>  # set/change the persistent docs vault
 rose --help            # full command list
 rose <command> --help  # per-command help
 ```

@@ -44,6 +44,9 @@ Configures:
 - Workspace root (default `~/workspaces`) — where workspace folders live
 - Template path (default `~/.rose/templates/default`) — copied into new workspaces
 - GitHub org — used for repo discovery
+- Vault path (optional, blank to skip) — persistent docs vault (e.g. an
+  Obsidian vault); if set, new workspaces link their docs folder into
+  `<vault>/<name>/` instead of a local `docs/` folder
 
 Config file: `~/.rose/config.toml`
 
@@ -56,6 +59,9 @@ path = "/absolute/path/to/template"
 
 [github]
 org = "your-org"
+
+[vault]
+path = "/absolute/path/to/vault"
 ```
 
 If init was skipped or org changed later:
@@ -63,6 +69,15 @@ If init was skipped or org changed later:
 ```bash
 rose org set <orgname>
 ```
+
+If a docs vault wasn't configured at init time, or the path changed:
+
+```bash
+rose vault set <path>
+```
+
+No `[vault]` section = no change in behavior — new workspaces keep getting
+a local `docs/` folder exactly as before.
 
 Refresh cached repo list (24h TTL):
 
@@ -87,6 +102,9 @@ Config missing?
 
 Repo cache stale or empty?
   └─ rose repos sync
+
+Need to set/change the persistent docs vault?
+  └─ rose vault set <path>
 ```
 
 ## Commands
@@ -122,7 +140,7 @@ rose create \
 **Without `--name` and `--repo`:** prompts for name, branch, and an InquirerPy
 fuzzy multiselect — not suitable for agents.
 
-**Result layout:**
+**Result layout (no vault configured — default):**
 
 ```
 <workspace_root>/<name>/
@@ -132,6 +150,22 @@ fuzzy multiselect — not suitable for agents.
     ├── api/                 # worktree on feature branch
     └── web/
 ```
+
+**Result layout (vault configured via `rose vault set <path>` or `rose init`):**
+
+```
+<workspace_root>/<name>/
+├── <name>.code-workspace    # folders entry for docs points at the vault (absolute path)
+└── repos/
+    ├── api/
+    └── web/
+
+<vault_path>/<name>/         # persists after the workspace is torn down
+```
+
+Either way, the `.code-workspace` `folders` entry for docs is always named
+`"docs"` (its `path` differs) — agents and skills should match by folder
+name, not by path suffix.
 
 Bare clones (shared, not inside workspace): `~/.rose/repos/<org>__<repo>.git`
 
@@ -201,6 +235,17 @@ Updates config and rebuilds repo cache.
 ### `rose repos sync` — refresh repo cache
 
 Fetches all repos for the configured org from GitHub.
+
+### `rose vault set <path>` — set/change the persistent docs vault
+
+```bash
+rose vault set ~/vault
+```
+
+Creates the directory if missing and writes `[vault]` to config. From then
+on, `rose create` links new workspaces' docs folder into `<vault>/<name>/`
+instead of a local `docs/` folder. Existing workspaces are unaffected —
+this only changes what happens on the *next* `rose create`.
 
 ## Common agent workflows
 

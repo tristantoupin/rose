@@ -273,12 +273,19 @@ def edit(name: str | None, force: bool) -> None:
                 "branch": branch,
                 "default_branch": added_default_branches.get(r, "main"),
             }
+    # Preserve the existing docs folder entry verbatim — it may point at a
+    # local docs/ folder or a vault path elsewhere; don't resolve it fresh.
+    existing_docs_entry = next(
+        (f for f in data.get("folders", []) if f.get("name") == "docs"),
+        {"path": "docs", "name": "docs"},
+    )
+
     data["rose"]["repos"] = updated_repos_meta
     data["folders"] = [
         {"path": f"repos/{git.repo_name_from_full(r)}", "name": git.repo_name_from_full(r)}
         for r in final_repos
     ]
-    data["folders"].append({"path": "docs", "name": "docs"})
+    data["folders"].append(existing_docs_entry)
     ws_file.write_text(json.dumps(data, indent=2))
 
     update_history(added)

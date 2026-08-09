@@ -17,6 +17,7 @@ from rose_cli.cache import (
     save_repo_cache,
     update_history,
 )
+from rose_cli.config import get_vault_path
 from rose_cli.commands.workspace._helpers import load_and_validate_config, open_cursor
 
 _SEARCH_SENTINEL = "🔍  Not there? Search GitHub..."
@@ -165,11 +166,42 @@ def _get_default_branches(repos: list[str]) -> dict[str, str]:
     return result
 
 
+def _resolve_docs_target(vault_path: Path | None, name: str, workspace_path: Path) -> Path:
+    """Vault subfolder if a vault is configured, else the local docs/ folder."""
+    if vault_path is not None:
+        return vault_path / name
+    return workspace_path / "docs"
+
+
+def _scaffold_docs(template_path: Path, docs_target: Path) -> None:
+    """Create docs_target, seeding it from the template's docs/ if present."""
+    docs_target.mkdir(parents=True, exist_ok=True)
+    template_docs = template_path / "docs"
+    if template_docs.is_dir():
+        shutil.copytree(str(template_docs), str(docs_target), dirs_exist_ok=True)
+
+
 def _scaffold_template(workspace_path: Path, template_path: Path) -> None:
-    """Copy template into workspace folder (skip if template missing)."""
+    """Copy template into workspace folder, excluding docs/ (handled by _scaffold_docs)."""
     if not template_path.is_dir():
         return
-    shutil.copytree(str(template_path), str(workspace_path), dirs_exist_ok=True)
+    for item in template_path.iterdir():
+        if item.name == "docs":
+            continue
+        dest = workspace_path / item.name
+        if item.is_dir():
+            shutil.copytree(str(item), str(dest), dirs_exist_ok=True)
+        else:
+            shutil.copy2(str(item), str(dest))
+
+
+def _docs_folder_entry(docs_target: Path, workspace_path: Path) -> dict:
+    """Relative 'docs' entry when local (today's exact output); absolute otherwise."""
+    try:
+        path_str = str(docs_target.relative_to(workspace_path))
+    except ValueError:
+        path_str = str(docs_target)
+    return {"path": path_str, "name": "docs"}
 
 
 def _create_worktrees(
@@ -206,12 +238,13 @@ def _write_code_workspace(
     repos: list[str],
     branch: str,
     default_branches: dict[str, str],
+    docs_target: Path,
 ) -> Path:
     folders = [
         {"path": f"repos/{git.repo_name_from_full(r)}", "name": git.repo_name_from_full(r)}
         for r in repos
     ]
-    folders.append({"path": "docs", "name": "docs"})
+    folders.append(_docs_folder_entry(docs_target, workspace_path))
 
     data = {
         "folders": folders,
@@ -307,15 +340,19 @@ def create(
 
     # Create workspace folder + scaffold
     target.mkdir(parents=True)
+    vault_path = get_vault_path()
+    docs_target = _resolve_docs_target(vault_path, name, target)
     _scaffold_template(target, template_path)
+    _scaffold_docs(template_path, docs_target)
 
     # Worktrees
     _create_worktrees(target, repos, branch, default_branches)
     click.echo()
 
     # .code-workspace
-    ws_file = _write_code_workspace(target, name, repos, branch, default_branches)
+    ws_file = _write_code_workspace(target, name, repos, branch, default_branches, docs_target)
     click.echo(f"  ✓  Workspace file: {ws_file}")
+    click.echo(f"  ✓  Docs:           {docs_target}")
 
     # History
     update_history(repos)

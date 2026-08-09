@@ -32,7 +32,12 @@ def read_config() -> dict[str, dict[str, str]]:
     return config
 
 
-def write_config(workspace_path: str, template_path: str, org: str = "") -> None:
+def write_config(
+    workspace_path: str,
+    template_path: str,
+    org: str = "",
+    vault_path: str = "",
+) -> None:
     """Write config as simple TOML."""
     ROSE_HOME.mkdir(parents=True, exist_ok=True)
     content = (
@@ -41,6 +46,8 @@ def write_config(workspace_path: str, template_path: str, org: str = "") -> None
     )
     if org:
         content += f'\n[github]\norg = "{org}"\n'
+    if vault_path:
+        content += f'\n[vault]\npath = "{vault_path}"\n'
     CONFIG_PATH.write_text(content)
 
 
@@ -55,7 +62,23 @@ def set_org(org: str) -> None:
     config = read_config()
     workspace_path = config.get("workspace", {}).get("path", "")
     template_path = config.get("template", {}).get("path", "")
-    write_config(workspace_path, template_path, org)
+    vault_path = config.get("vault", {}).get("path", "")
+    write_config(workspace_path, template_path, org, vault_path)
+
+
+def get_vault_path() -> Path | None:
+    """Return configured vault path, or None if no vault is set up."""
+    raw = read_config().get("vault", {}).get("path", "")
+    return expand_path(raw) if raw else None
+
+
+def set_vault_path(path: str) -> None:
+    """Update [vault] path in config, preserving other sections."""
+    config = read_config()
+    workspace_path = config.get("workspace", {}).get("path", "")
+    template_path = config.get("template", {}).get("path", "")
+    org = config.get("github", {}).get("org", "")
+    write_config(workspace_path, template_path, org, path)
 
 
 def expand_path(path: str) -> Path:
