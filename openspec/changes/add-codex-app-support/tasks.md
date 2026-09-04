@@ -33,7 +33,7 @@
   - Replace Cursor-specific help text, comments, and output with configured-app wording.
   - Keep `.code-workspace` generation, scanning, and metadata unchanged.
 
-- [ ] 6. Make agent integration paths application-neutral.
+- [x] 6. Make agent integration paths application-neutral.
   - Move the complete `.cursor/skills` tree to canonical `.agents/skills`.
   - Add `.cursor/skills` as an alias to `../.agents/skills`.
   - Update the Rose skill to cover Cursor and Codex Desktop, the new app command, config behavior, launch behavior, and canonical paths.
@@ -67,7 +67,7 @@
   - Existing workspaces created before this change still list, edit, and open in Cursor by default.
   - Switching the global application changes how an existing workspace opens.
 
-- [ ] 10. Verify agent integration and documentation.
+- [x] 10. Verify agent integration and documentation.
   - Codex and other compatible agents discover skills under `.agents/skills`.
   - Cursor discovers the same skills through `.cursor/skills`.
   - Cursor and Codex consume the root `AGENTS.md` instructions.
