@@ -8,7 +8,7 @@ import click
 from InquirerPy import inquirer
 
 from rose_cli import git
-from rose_cli.commands.workspace._helpers import load_and_validate_config, open_cursor
+from rose_cli.commands.workspace._helpers import load_and_validate_config, open_workspace
 
 
 @dataclass
@@ -80,7 +80,7 @@ def _pick_workspace(infos: list[WorkspaceInfo]) -> WorkspaceInfo | None:
 
 @click.command("list")
 def list_cmd() -> None:
-    """List workspaces and open one in Cursor."""
+    """List workspaces and open one in the configured app."""
     workspace_root, _, _ = load_and_validate_config()
 
     workspaces = _scan_workspaces(workspace_root)
@@ -92,4 +92,4 @@ def list_cmd() -> None:
     if selected is None:
         return
 
-    open_cursor(selected.ws_file)
+    open_workspace(selected.workspace_path, selected.ws_file)

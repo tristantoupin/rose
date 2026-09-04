@@ -18,7 +18,7 @@ from rose_cli.cache import (
     update_history,
 )
 from rose_cli.config import get_vault_path
-from rose_cli.commands.workspace._helpers import load_and_validate_config, open_cursor
+from rose_cli.commands.workspace._helpers import load_and_validate_config, open_workspace
 
 _SEARCH_SENTINEL = "🔍  Not there? Search GitHub..."
 _NAME_RE = re.compile(r"^[a-zA-Z0-9_\-]+$")
@@ -366,5 +366,5 @@ def create(
     click.echo(f"  ✓  Repos ({len(repos)}): {repo_names}")
     click.echo()
 
-    # Open Cursor
-    open_cursor(ws_file)
+    # Open in the configured application
+    open_workspace(target, ws_file)

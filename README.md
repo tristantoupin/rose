@@ -2,7 +2,7 @@
 
 CLI for multi-repo development workspaces. Rose creates git worktrees across
 selected repos on a shared feature branch, writes a `.code-workspace` file, and
-opens Cursor.
+opens Cursor or Codex Desktop.
 
 ## Requirements
 
@@ -10,7 +10,7 @@ opens Cursor.
 - [pipx](https://pipx.pypa.io/)
 - [GitHub CLI](https://cli.github.com/) (`gh`), authenticated (`gh auth login`)
 - `git`
-- `cursor` (optional — used to open workspaces after create/edit/list)
+- `cursor` or `codex` (optional — used to open workspaces after create/edit/list)
 
 ## Install
 
@@ -64,15 +64,27 @@ Interactive setup. Configures:
 - Vault path (optional, blank to skip) — a persistent docs folder (e.g. an
   Obsidian vault) that new workspaces link their docs into, instead of a
   local `docs/` folder. Change it later with `rose vault set <path>`.
+- Development application (`cursor` or `codex`, default `cursor`)
 
 Config is stored at `~/.rose/config.toml`. Bare clones live in
 `~/.rose/repos/`.
 
+The config includes the selected application:
+
+```toml
+[app]
+name = "cursor"
+```
+
+Legacy configs without `[app]` use Cursor and gain an explicit
+`[app] name = "cursor"` the next time Rose rewrites the config.
+
 ## Install the agent skill
 
-Rose includes a Cursor skill so agents know how to run the CLI correctly
-(non-interactive flags, workspace layout, limitations). When working inside a
-clone of this repo, Cursor discovers `.cursor/skills/rose/` automatically.
+Rose includes an application-neutral skill so agents know how to run the CLI
+correctly (non-interactive flags, workspace layout, limitations). The canonical
+repository path is `.agents/skills/rose/`; Cursor discovers the same skill
+through the `.cursor/skills` compatibility alias.
 
 **Install globally** (other projects, without cloning rose):
 
@@ -91,7 +103,7 @@ npx skills add tristantoupin/rose@rose -y
 ```bash
 cd /path/to/rose
 mkdir -p ~/.cursor/skills
-ln -sf "$(pwd)/.cursor/skills/rose" ~/.cursor/skills/rose
+ln -sf "$(pwd)/.agents/skills/rose" ~/.cursor/skills/rose
 ```
 
 Start a new agent session after installing.
@@ -166,12 +178,36 @@ rose edit my-feature --force # skip uncommitted/unpushed safety checks on remova
 
 ### `rose list`
 
-List workspaces and open one in Cursor. **Interactive** — fuzzy picker
+List workspaces and open one in the configured app. **Interactive** — fuzzy picker
 (requires TTY).
 
 ```bash
 rose list
 ```
+
+### `rose app set <cursor|codex>`
+
+Change the global application used by `rose create`, `rose edit`, and
+`rose list` without changing any other config value:
+
+```bash
+rose app set codex
+rose app set cursor
+```
+
+The argument is case-insensitive. The command requires an existing Rose config
+and warns, without aborting, if the selected executable is unavailable.
+
+Rose launches applications as follows:
+
+```text
+Cursor: cursor <workspace>.code-workspace
+Codex:  codex app <workspace-directory>
+```
+
+Rose prints the exact manual command when an executable is missing. The
+`.code-workspace` file remains Rose's metadata and Cursor workspace file; Codex
+opens the containing workspace directory and ignores the file.
 
 ### Other commands
 
@@ -186,8 +222,9 @@ rose <command> --help  # per-command help
 
 ## Agent-friendly usage
 
-Agents should read `.cursor/skills/rose/SKILL.md` (or the installed copy at
-`~/.cursor/skills/rose/SKILL.md`) before running Rose commands.
+Agents should read `.agents/skills/rose/SKILL.md` (or the installed copy at
+`~/.cursor/skills/rose/SKILL.md`) before running Rose commands. Cursor projects
+can use the equivalent `.cursor/skills/rose/` compatibility alias.
 
 Key points:
 
@@ -197,6 +234,8 @@ Key points:
   under the workspace root instead
 - Ensure `rose init` has been run and `gh auth status` succeeds before creating
   workspaces
+- The selected application is global; use `rose app set cursor|codex` to change
+  how existing and future workspaces open
 
 ## Help
 
