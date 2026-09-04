@@ -9,7 +9,14 @@ import click
 
 from rose_cli.ascii import ROSE_GREETING
 from rose_cli.cache import save_repo_cache
-from rose_cli.config import CONFIG_PATH, config_exists, expand_path, write_config
+from rose_cli.config import (
+    CONFIG_PATH,
+    DEFAULT_APP,
+    SUPPORTED_APPS,
+    config_exists,
+    expand_path,
+    write_config,
+)
 from rose_cli import github
 
 DEFAULT_WORKSPACE = "~/workspaces"
@@ -85,6 +92,16 @@ def init() -> None:
         click.echo(f"  ✓  Default template created: {template_path}")
     click.echo()
 
+    # Development application
+    app_name = click.prompt(
+        "Development application (cursor, codex)",
+        type=click.Choice(SUPPORTED_APPS, case_sensitive=False),
+        default=DEFAULT_APP,
+    ).lower()
+    if not shutil.which(app_name):
+        click.echo(f"  ⚠  '{app_name}' not found in PATH. You can install it later.")
+    click.echo()
+
     # GitHub org
     org = click.prompt(
         "GitHub organization name",
@@ -105,7 +122,13 @@ def init() -> None:
     click.echo()
 
     # Write config
-    write_config(str(workspace_path), str(template_path), org, str(vault_path) if vault_path else "")
+    write_config(
+        str(workspace_path),
+        str(template_path),
+        org,
+        str(vault_path) if vault_path else "",
+        app_name,
+    )
     click.echo(f"  ✓  Config saved to {CONFIG_PATH}")
 
     # Build initial repo cache
@@ -123,6 +146,7 @@ def init() -> None:
     click.echo("─" * 50)
     click.echo(f"  ✓  Workspace path:  {workspace_path}")
     click.echo(f"  ✓  Template path:   {template_path}")
+    click.echo(f"  ✓  Application:     {app_name}")
     click.echo(f"  ✓  GitHub org:      {org}")
     click.echo(f"  ✓  Vault path:      {vault_path or '(not configured — docs stay local)'}")
     if not gh_ok:

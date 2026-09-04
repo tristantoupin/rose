@@ -10,7 +10,7 @@ from InquirerPy.base.control import Choice
 
 from rose_cli import git, github
 from rose_cli.cache import get_cached_repos, load_history, save_repo_cache, update_history
-from rose_cli.commands.workspace._helpers import load_and_validate_config, open_cursor
+from rose_cli.commands.workspace._helpers import load_and_validate_config, open_workspace
 from rose_cli.commands.workspace.create import (
     _SEARCH_SENTINEL,
     _ensure_bare_clones,
@@ -304,4 +304,4 @@ def edit(name: str | None, force: bool, repo_opt: tuple[str, ...]) -> None:
     click.echo(f"     Repos ({len(final_repos)}): {short_final}")
     click.echo()
 
-    open_cursor(ws_file)
+    open_workspace(workspace_dir, ws_file)

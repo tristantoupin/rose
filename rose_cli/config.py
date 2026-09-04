@@ -5,6 +5,8 @@ from pathlib import Path
 
 ROSE_HOME = Path.home() / ".rose"
 CONFIG_PATH = ROSE_HOME / "config.toml"
+SUPPORTED_APPS = ("cursor", "codex")
+DEFAULT_APP = "cursor"
 
 
 def config_exists() -> bool:
@@ -37,8 +39,15 @@ def write_config(
     template_path: str,
     org: str = "",
     vault_path: str = "",
+    app_name: str = DEFAULT_APP,
 ) -> None:
     """Write config as simple TOML."""
+    if app_name not in SUPPORTED_APPS:
+        raise ValueError(
+            f"Unsupported application '{app_name}'. "
+            f"Supported applications: {', '.join(SUPPORTED_APPS)}"
+        )
+
     ROSE_HOME.mkdir(parents=True, exist_ok=True)
     content = (
         f'[workspace]\npath = "{workspace_path}"\n\n'
@@ -48,6 +57,7 @@ def write_config(
         content += f'\n[github]\norg = "{org}"\n'
     if vault_path:
         content += f'\n[vault]\npath = "{vault_path}"\n'
+    content += f'\n[app]\nname = "{app_name}"\n'
     CONFIG_PATH.write_text(content)
 
 
@@ -63,7 +73,7 @@ def set_org(org: str) -> None:
     workspace_path = config.get("workspace", {}).get("path", "")
     template_path = config.get("template", {}).get("path", "")
     vault_path = config.get("vault", {}).get("path", "")
-    write_config(workspace_path, template_path, org, vault_path)
+    write_config(workspace_path, template_path, org, vault_path, get_app())
 
 
 def get_vault_path() -> Path | None:
@@ -78,7 +88,37 @@ def set_vault_path(path: str) -> None:
     workspace_path = config.get("workspace", {}).get("path", "")
     template_path = config.get("template", {}).get("path", "")
     org = config.get("github", {}).get("org", "")
-    write_config(workspace_path, template_path, org, path)
+    write_config(workspace_path, template_path, org, path, get_app())
+
+
+def get_app() -> str:
+    """Return the configured application, defaulting to Cursor for legacy configs."""
+    app_name = read_config().get("app", {}).get("name", DEFAULT_APP)
+    if app_name not in SUPPORTED_APPS:
+        raise ValueError(
+            f"Unsupported application '{app_name}'. "
+            f"Supported applications: {', '.join(SUPPORTED_APPS)}"
+        )
+    return app_name
+
+
+def set_app(app_name: str) -> None:
+    """Update the configured application while preserving all other settings."""
+    if app_name not in SUPPORTED_APPS:
+        raise ValueError(
+            f"Unsupported application '{app_name}'. "
+            f"Supported applications: {', '.join(SUPPORTED_APPS)}"
+        )
+
+    # Validate an existing value before replacing it so malformed legacy
+    # configuration is never silently hidden by an unrelated rewrite.
+    get_app()
+    config = read_config()
+    workspace_path = config.get("workspace", {}).get("path", "")
+    template_path = config.get("template", {}).get("path", "")
+    org = config.get("github", {}).get("org", "")
+    vault_path = config.get("vault", {}).get("path", "")
+    write_config(workspace_path, template_path, org, vault_path, app_name)
 
 
 def expand_path(path: str) -> Path:

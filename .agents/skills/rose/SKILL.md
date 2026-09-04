@@ -3,13 +3,14 @@ name: rose
 description: >
   Manage multi-repo Rose workspaces with the rose CLI. Use when the user asks
   to create, edit, or list workspaces, set up a feature branch across repos,
-  open a Cursor workspace, or run rose commands.
+  open a workspace in the configured app, or run rose commands.
 ---
 
 # Rose CLI
 
 Rose sets up multi-repo development workspaces: bare clones, git worktrees on a
-shared feature branch, a `.code-workspace` file, and optional Cursor launch.
+shared feature branch, a `.code-workspace` file, and an optional launch in
+Cursor or Codex Desktop.
 
 **Prefer non-interactive flags** whenever driving `rose` from an agent. Several
 commands use InquirerPy pickers that require a TTY.
@@ -22,7 +23,8 @@ commands use InquirerPy pickers that require a TTY.
 | [pipx](https://pipx.pypa.io/) | Isolated global install |
 | [GitHub CLI](https://cli.github.com/) (`gh`) | Repo list, search, default branch |
 | `git` | Bare clones and worktrees |
-| `cursor` (optional) | Auto-open workspace after create/edit/list |
+| `cursor` (optional) | Auto-open `.code-workspace` after create/edit/list |
+| `codex` (optional) | Auto-open workspace directory after create/edit/list |
 
 Verify before first use:
 
@@ -47,6 +49,8 @@ Configures:
 - Vault path (optional, blank to skip) — persistent docs vault (e.g. an
   Obsidian vault); if set, new workspaces link their docs folder into
   `<vault>/<name>/` instead of a local `docs/` folder
+- Development application (`cursor` or `codex`, default `cursor`) — controls
+  how workspaces are opened
 
 Config file: `~/.rose/config.toml`
 
@@ -62,7 +66,13 @@ org = "your-org"
 
 [vault]
 path = "/absolute/path/to/vault"
+
+[app]
+name = "cursor"
 ```
+
+Legacy configs without `[app]` use Cursor. The next config rewrite materializes
+`[app] name = "cursor"`.
 
 If init was skipped or org changed later:
 
@@ -106,6 +116,9 @@ Repo cache stale or empty?
 
 Need to set/change the persistent docs vault?
   └─ rose vault set <path>
+
+Need to change the workspace application?
+  └─ rose app set cursor|codex
 ```
 
 ## Commands
@@ -113,7 +126,7 @@ Need to set/change the persistent docs vault?
 ### `rose create` — create workspace (agent-friendly)
 
 Creates a workspace folder, bare clones (or updates them), worktrees on a
-feature branch, `.code-workspace` metadata, and opens Cursor.
+feature branch, `.code-workspace` metadata, and opens the configured app.
 
 **Non-interactive (use this from agents):**
 
@@ -145,7 +158,7 @@ fuzzy multiselect — not suitable for agents.
 
 ```
 <workspace_root>/<name>/
-├── <name>.code-workspace    # Cursor/VS Code workspace + rose metadata
+├── <name>.code-workspace    # Rose metadata; Cursor consumes it directly
 ├── docs/                    # from template (shared docs folder)
 └── repos/
     ├── api/                 # worktree on feature branch
@@ -226,8 +239,8 @@ yet implemented in all versions — check `rose --help`).
 
 ### `rose list` — list and open workspace (interactive)
 
-Scans workspace root, shows fuzzy picker sorted by `rose.created`, opens
-selection in Cursor.
+Scans workspace root, shows fuzzy picker sorted by `rose.created`, and opens
+the selection in the configured app.
 
 ```bash
 rose list
@@ -245,9 +258,39 @@ WORKSPACE_ROOT=$(grep '^path' ~/.rose/config.toml | cut -d'"' -f2)
 find "$WORKSPACE_ROOT" -maxdepth 2 -name '*.code-workspace'
 ```
 
+### `rose app set <cursor|codex>` — change the application
+
+Requires an existing config and preserves all other settings:
+
+```bash
+rose app set codex
+rose app set cursor
+```
+
+The argument is case-insensitive. Rose warns if the selected executable is not
+available but still saves the configuration. This command does not open a
+workspace.
+
 ### `rose init` — first-time setup (interactive)
 
 One-time machine setup. Not for agents unless user is present.
+
+The application prompt defaults to Cursor. Missing `cursor` or `codex` does not
+abort initialization; Rose warns and continues.
+
+## Application launch behavior
+
+The configured application is global and applies to create, edit, and list:
+
+| Application | Launch command |
+|-------------|----------------|
+| Cursor | `cursor <workspace>.code-workspace` |
+| Codex Desktop | `codex app <workspace-directory>` |
+
+Both launches are non-blocking. If the executable is unavailable, Rose prints
+the exact manual command. `.code-workspace` remains Rose's workspace metadata
+and Cursor workspace file; Codex opens its containing workspace directory and
+ignores the file.
 
 ### `rose org set <orgname>` — change GitHub org
 
@@ -315,7 +358,9 @@ cd /path/to/rose && git pull && pipx upgrade rose
 
 ## Install the Rose skill
 
-Inside a rose clone, Cursor auto-discovers `.cursor/skills/rose/`. Elsewhere:
+Inside a rose clone, compatible agents discover the canonical
+`.agents/skills/rose/`. Cursor also discovers the same files through the
+`.cursor/skills` compatibility alias. Elsewhere:
 
 ```bash
 npx skills add tristantoupin/rose@rose -g -y   # global (~/.cursor/skills/)
@@ -325,7 +370,7 @@ npx skills add tristantoupin/rose@rose -y      # current project
 Manual fallback from a local clone:
 
 ```bash
-ln -sf "$(pwd)/.cursor/skills/rose" ~/.cursor/skills/rose
+ln -sf "$(pwd)/.agents/skills/rose" ~/.cursor/skills/rose
 ```
 
 Restart Cursor or start a new agent session so the skill is picked up.

@@ -3,6 +3,7 @@ import click
 from rose_cli.commands.workspace.create import create
 from rose_cli.commands.workspace.edit import edit
 from rose_cli.commands.workspace.list import list_cmd
+from rose_cli.commands.app import app
 from rose_cli.commands.init import init
 from rose_cli.commands.org import org
 from rose_cli.commands.repos import repos
@@ -15,6 +16,7 @@ def cli() -> None:
 
 
 cli.add_command(init)
+cli.add_command(app)
 cli.add_command(org)
 cli.add_command(repos)
 cli.add_command(vault)
