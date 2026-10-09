@@ -94,7 +94,7 @@ def init() -> None:
 
     # Development application
     app_name = click.prompt(
-        "Development application (cursor, codex)",
+        "Development application",
         type=click.Choice(SUPPORTED_APPS, case_sensitive=False),
         default=DEFAULT_APP,
     ).lower()

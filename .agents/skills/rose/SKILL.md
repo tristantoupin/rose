@@ -10,7 +10,7 @@ description: >
 
 Rose sets up multi-repo development workspaces: bare clones, git worktrees on a
 shared feature branch, a `.code-workspace` file, and an optional launch in
-Cursor or Codex Desktop.
+Cursor, Codex Desktop, or T3 Code.
 
 **Prefer non-interactive flags** whenever driving `rose` from an agent. Several
 commands use InquirerPy pickers that require a TTY.
@@ -25,6 +25,7 @@ commands use InquirerPy pickers that require a TTY.
 | `git` | Bare clones and worktrees |
 | `cursor` (optional) | Auto-open `.code-workspace` after create/edit/list |
 | `codex` (optional) | Auto-open workspace directory after create/edit/list |
+| `t3` (optional) | Open workspace directory in the running T3 Code desktop app after create/edit/list (`npm install -g t3`) |
 
 Verify before first use:
 
@@ -49,8 +50,8 @@ Configures:
 - Vault path (optional, blank to skip) — persistent docs vault (e.g. an
   Obsidian vault); if set, new workspaces link their docs folder into
   `<vault>/<name>/` instead of a local `docs/` folder
-- Development application (`cursor` or `codex`, default `cursor`) — controls
-  how workspaces are opened
+- Development application (`cursor`, `codex`, or `t3`, default `cursor`) —
+  controls how workspaces are opened
 
 Config file: `~/.rose/config.toml`
 
@@ -118,7 +119,7 @@ Need to set/change the persistent docs vault?
   └─ rose vault set <path>
 
 Need to change the workspace application?
-  └─ rose app set cursor|codex
+  └─ rose app set cursor|codex|t3
 ```
 
 ## Commands
@@ -176,6 +177,19 @@ fuzzy multiselect — not suitable for agents.
 
 <vault_path>/<name>/         # persists after the workspace is torn down
 ```
+
+When Codex or T3 Code is the configured app, Rose also creates a `docs`
+symlink inside the workspace root:
+
+```
+<workspace_root>/<name>/docs -> <vault_path>/<name>/
+```
+
+Codex and T3 Code open the workspace directory and do not read
+`.code-workspace`, so Rose exposes external folder entries this way. The link
+is not a copy: edits made through either app remain in the configured vault.
+Existing paths are never overwritten; Rose reports a warning if a link name is
+already in use.
 
 Either way, the `.code-workspace` `folders` entry for docs is always named
 `"docs"` (its `path` differs) — agents and skills should match by folder
@@ -258,13 +272,14 @@ WORKSPACE_ROOT=$(grep '^path' ~/.rose/config.toml | cut -d'"' -f2)
 find "$WORKSPACE_ROOT" -maxdepth 2 -name '*.code-workspace'
 ```
 
-### `rose app set <cursor|codex>` — change the application
+### `rose app set <cursor|codex|t3>` — change the application
 
 Requires an existing config and preserves all other settings:
 
 ```bash
 rose app set codex
 rose app set cursor
+rose app set t3
 ```
 
 The argument is case-insensitive. Rose warns if the selected executable is not
@@ -275,8 +290,8 @@ workspace.
 
 One-time machine setup. Not for agents unless user is present.
 
-The application prompt defaults to Cursor. Missing `cursor` or `codex` does not
-abort initialization; Rose warns and continues.
+The application prompt defaults to Cursor. Missing `cursor`, `codex`, or `t3`
+does not abort initialization; Rose warns and continues.
 
 ## Application launch behavior
 
@@ -286,11 +301,52 @@ The configured application is global and applies to create, edit, and list:
 |-------------|----------------|
 | Cursor | `cursor <workspace>.code-workspace` |
 | Codex Desktop | `codex app <workspace-directory>` |
+| T3 Code | `t3 app <workspace-directory>` |
 
-Both launches are non-blocking. If the executable is unavailable, Rose prints
-the exact manual command. `.code-workspace` remains Rose's workspace metadata
-and Cursor workspace file; Codex opens its containing workspace directory and
-ignores the file.
+Cursor and Codex launches are non-blocking. The T3 launch waits up to 30
+seconds for `t3 app` to report whether the desktop app opened the workspace. If
+the executable is unavailable or the T3 launch fails, Rose prints the exact
+manual command. `.code-workspace` remains Rose's workspace metadata and Cursor
+workspace file; Codex and T3 Code open its containing workspace directory and
+ignore the file.
+
+### Codex project registration
+
+When Codex is the configured application, `rose create`, `rose edit`, and
+`rose list` use `codex app <workspace-directory>`. Codex Desktop registers and
+opens that directory as a local project, so this is the supported way to add a
+Rose workspace to the Codex project list.
+
+To register an existing workspace manually:
+
+```bash
+codex app /absolute/path/to/workspace
+```
+
+Do not use `codex exec` for project registration. `codex exec` starts a CLI
+agent session and requires a prompt; it is not the Codex Desktop project
+creation path.
+
+### T3 Code project registration
+
+When T3 Code is the configured application, `rose create`, `rose edit`, and
+`rose list` run `t3 app <workspace-directory>`. The `t3` CLI asks the running
+T3 Code desktop app to add that directory as a project (or reuse the existing
+one) and open it, so this is the supported way to add a Rose workspace to the
+T3 Code project list.
+
+To register an existing workspace manually:
+
+```bash
+t3 app /absolute/path/to/workspace
+```
+
+Requirements and limits:
+
+- The T3 Code desktop app must already be running on the same machine. A
+  running `t3 serve` server is not enough.
+- `t3 app` refuses to run over SSH (`SSH_CONNECTION` or `SSH_TTY` set).
+- Do not edit T3 Code state under `~/.t3` directly.
 
 ### `rose org set <orgname>` — change GitHub org
 
@@ -355,6 +411,7 @@ cd /path/to/rose && git pull && pipx upgrade rose
 | `'path' already exists` | Pick a different `--name` or remove old workspace |
 | `Workspace 'X' not found` | Check name; list workspaces via `.code-workspace` scan |
 | `inactive` | Workspace was deactivated; user must reactivate |
+| `t3 could not open the workspace` | Start the T3 Code desktop app, then run the printed `t3 app <dir>` command |
 
 ## Install the Rose skill
 

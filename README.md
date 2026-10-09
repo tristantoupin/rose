@@ -2,7 +2,7 @@
 
 CLI for multi-repo development workspaces. Rose creates git worktrees across
 selected repos on a shared feature branch, writes a `.code-workspace` file, and
-opens Cursor or Codex Desktop.
+opens Cursor, Codex Desktop, or T3 Code.
 
 ## Requirements
 
@@ -10,7 +10,9 @@ opens Cursor or Codex Desktop.
 - [pipx](https://pipx.pypa.io/)
 - [GitHub CLI](https://cli.github.com/) (`gh`), authenticated (`gh auth login`)
 - `git`
-- `cursor` or `codex` (optional — used to open workspaces after create/edit/list)
+- `cursor`, `codex`, or `t3` (optional — used to open workspaces after create/edit/list)
+  - T3 Code needs the [T3 Code](https://t3.codes) desktop app and its `t3` CLI
+    on `PATH` (`npm install -g t3`)
 
 ## Install
 
@@ -64,7 +66,7 @@ Interactive setup. Configures:
 - Vault path (optional, blank to skip) — a persistent docs folder (e.g. an
   Obsidian vault) that new workspaces link their docs into, instead of a
   local `docs/` folder. Change it later with `rose vault set <path>`.
-- Development application (`cursor` or `codex`, default `cursor`)
+- Development application (`cursor`, `codex`, or `t3`, default `cursor`)
 
 Config is stored at `~/.rose/config.toml`. Bare clones live in
 `~/.rose/repos/`.
@@ -149,9 +151,12 @@ Creates:
 ```
 
 If a vault is configured (`rose init` or `rose vault set <path>`), the
-workspace has no local `docs/` — the `.code-workspace` file's docs folder
-entry instead points at `<vault>/my-feature/`, which persists even after the
-workspace is deleted.
+`.code-workspace` file's docs folder entry points at `<vault>/my-feature/`,
+which persists even after the workspace is deleted. When Codex or T3 Code is
+the selected app, Rose also creates `docs -> <vault>/my-feature/` inside the
+workspace so the app can see the external folder even though it ignores
+`.code-workspace`. Cursor does not get this link and continues using the single
+configured docs folder from `.code-workspace`.
 
 ### `rose edit`
 
@@ -185,7 +190,7 @@ List workspaces and open one in the configured app. **Interactive** — fuzzy pi
 rose list
 ```
 
-### `rose app set <cursor|codex>`
+### `rose app set <cursor|codex|t3>`
 
 Change the global application used by `rose create`, `rose edit`, and
 `rose list` without changing any other config value:
@@ -193,6 +198,7 @@ Change the global application used by `rose create`, `rose edit`, and
 ```bash
 rose app set codex
 rose app set cursor
+rose app set t3
 ```
 
 The argument is case-insensitive. The command requires an existing Rose config
@@ -203,11 +209,20 @@ Rose launches applications as follows:
 ```text
 Cursor: cursor <workspace>.code-workspace
 Codex:  codex app <workspace-directory>
+T3:     t3 app <workspace-directory>
 ```
 
 Rose prints the exact manual command when an executable is missing. The
-`.code-workspace` file remains Rose's metadata and Cursor workspace file; Codex
-opens the containing workspace directory and ignores the file.
+`.code-workspace` file remains Rose's metadata and Cursor workspace file. Codex
+and T3 Code open the containing workspace directory and ignore the file; Rose
+exposes external folders configured in its `folders` list as symlinks only for
+those two apps.
+
+`t3 app` asks the running T3 Code desktop app to add the workspace as a project
+(or reuse the existing one) and open it. The desktop app must already be
+running, and `t3 app` does not work over SSH. If it fails, Rose prints the
+reason and the manual command; the workspace itself is still created or
+updated.
 
 ### Other commands
 
@@ -234,8 +249,8 @@ Key points:
   under the workspace root instead
 - Ensure `rose init` has been run and `gh auth status` succeeds before creating
   workspaces
-- The selected application is global; use `rose app set cursor|codex` to change
-  how existing and future workspaces open
+- The selected application is global; use `rose app set cursor|codex|t3` to
+  change how existing and future workspaces open
 
 ## Help
 
