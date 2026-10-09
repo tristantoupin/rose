@@ -177,6 +177,18 @@ fuzzy multiselect — not suitable for agents.
 <vault_path>/<name>/         # persists after the workspace is torn down
 ```
 
+When Codex is the configured app, Rose also creates a `docs` symlink inside
+the workspace root:
+
+```
+<workspace_root>/<name>/docs -> <vault_path>/<name>/
+```
+
+Codex opens the workspace directory and does not read `.code-workspace`, so
+Rose exposes external folder entries this way. The link is not a copy: edits
+made through Codex remain in the configured vault. Existing paths are never
+overwritten; Rose reports a warning if a link name is already in use.
+
 Either way, the `.code-workspace` `folders` entry for docs is always named
 `"docs"` (its `path` differs) — agents and skills should match by folder
 name, not by path suffix.
@@ -291,6 +303,23 @@ Both launches are non-blocking. If the executable is unavailable, Rose prints
 the exact manual command. `.code-workspace` remains Rose's workspace metadata
 and Cursor workspace file; Codex opens its containing workspace directory and
 ignores the file.
+
+### Codex project registration
+
+When Codex is the configured application, `rose create`, `rose edit`, and
+`rose list` use `codex app <workspace-directory>`. Codex Desktop registers and
+opens that directory as a local project, so this is the supported way to add a
+Rose workspace to the Codex project list.
+
+To register an existing workspace manually:
+
+```bash
+codex app /absolute/path/to/workspace
+```
+
+Do not use `codex exec` for project registration. `codex exec` starts a CLI
+agent session and requires a prompt; it is not the Codex Desktop project
+creation path.
 
 ### `rose org set <orgname>` — change GitHub org
 

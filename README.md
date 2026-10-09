@@ -149,9 +149,12 @@ Creates:
 ```
 
 If a vault is configured (`rose init` or `rose vault set <path>`), the
-workspace has no local `docs/` — the `.code-workspace` file's docs folder
-entry instead points at `<vault>/my-feature/`, which persists even after the
-workspace is deleted.
+`.code-workspace` file's docs folder entry points at `<vault>/my-feature/`,
+which persists even after the workspace is deleted. When Codex is the selected
+app, Rose also creates `docs -> <vault>/my-feature/` inside the workspace so
+Codex can see the external folder even though it ignores `.code-workspace`.
+Cursor does not get this link and continues using the single configured docs
+folder from `.code-workspace`.
 
 ### `rose edit`
 
@@ -206,8 +209,9 @@ Codex:  codex app <workspace-directory>
 ```
 
 Rose prints the exact manual command when an executable is missing. The
-`.code-workspace` file remains Rose's metadata and Cursor workspace file; Codex
-opens the containing workspace directory and ignores the file.
+`.code-workspace` file remains Rose's metadata and Cursor workspace file. Codex
+opens the containing workspace directory and ignores the file; Rose exposes
+external folders configured in its `folders` list as symlinks only for Codex.
 
 ### Other commands
 
