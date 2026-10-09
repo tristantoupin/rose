@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROSE_HOME = Path.home() / ".rose"
 CONFIG_PATH = ROSE_HOME / "config.toml"
-SUPPORTED_APPS = ("cursor", "codex")
+SUPPORTED_APPS = ("cursor", "codex", "t3")
 DEFAULT_APP = "cursor"
 
 
